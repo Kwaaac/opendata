@@ -113,14 +113,21 @@ function cmpDiplom(array $a, array $b)
         <div class="selectFilter">
             <label>Niveau d'étude</label> <br>
             <select name="bac" id="bac-select">
-                <option value="bac"> Entre Bac +1 et Bac +7 et plus</option>
-                <option value="bac1">Bac +1</option>
-                <option value="bac2">Bac +2</option>
-                <option value="bac3">Bac +3</option>
-                <option value="bac4">Bac +4</option>
-                <option value="bac5">Bac +5</option>
-                <option value="bac6">Bac +6</option>
-                <option value="bac7">Bac +7 et plus</option>
+                <option value="none"> N'importe quel niveau</option>
+
+                <?php
+                $reqBac = file_get_contents("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&q=diplome&rows=0&facet=rentree_lib&facet=niveau_lib&refine.rentree_lib=2017-18");
+                $jsonBac = json_decode($reqBac, true);
+
+                usort($jsonBac["facet_groups"][0]["facets"], 'cmpDiplom');
+
+                foreach ($jsonBac["facet_groups"][0]["facets"] as $bac) {
+                    $value = $bac["name"];
+                    $libBac = $bac["name"];
+                    print ("<option value=\"" . $value . "\">" . $libBac . "</option>");
+                }
+                ?>
+
             </select>
         </div>
 
@@ -128,7 +135,8 @@ function cmpDiplom(array $a, array $b)
             <label>Grandes disiplines de formations</label>
             <br>
             <select class="box-filter" name="formation" id="formationSelect">
-                <option value="-1"> N'importe quel formation</option>
+                <option value="none"> N'importe quel formation</option>
+
                 <?php
                 $reqFormation = file_get_contents("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&refine.rentree_lib=2017-18&rows=0&facet=libelle_intitule_1");
                 $jsonFormation = json_decode($reqFormation, true);
@@ -141,13 +149,14 @@ function cmpDiplom(array $a, array $b)
                     print ("<option value=\"" . $value . "\">" . $libFormation . "</option>");
                 }
                 ?>
+
             </select>
         </div>
         <div class="selectFilter">
             <label>Académie</label>
             <br>
-            <select name="acad" id="bac-select">
-                <option value="-1">Toute la france</option>
+            <select name="acad" id="academie-select">
+                <option value="none">Toute la france</option>
                 <?php
                 $reqAcademie = file_get_contents("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&rows=0&facet=aca_etab_lib&facet=rentree_lib&refine.rentree_lib=2017-18");
                 $jsonAcademie = json_decode($reqAcademie, true);
@@ -177,43 +186,46 @@ function cmpDiplom(array $a, array $b)
         </thead>
         <tbody>
         <?php
+        if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad'])) {
+            $refineBac = "";
+            $refineForm = "";
+            $refineAcad = "";
 
-        $etablissementFormation = file_get_contents("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&sort=-rentree_lib&facet=rentree_lib&facet=etablissement_type2&facet=etablissement_type_lib&facet=etablissement&facet=etablissement_lib&facet=champ_statistique&facet=dn_de_lib&facet=cursus_lmd_lib&facet=diplome_rgp&facet=diplome_lib&facet=typ_diplome_lib&facet=diplom&facet=niveau_lib&facet=disciplines_selection&facet=gd_disciscipline_lib&facet=discipline_lib&facet=sect_disciplinaire_lib&facet=spec_dut_lib&facet=localisation_ins&facet=com_etab&facet=com_etab_lib&facet=uucr_etab&facet=uucr_etab_lib&facet=dep_etab&facet=dep_etab_lib&facet=aca_etab&facet=aca_etab_lib&facet=reg_etab&facet=reg_etab_lib&facet=com_ins&facet=com_ins_lib&facet=uucr_ins&facet=dep_ins&facet=dep_ins_lib&facet=aca_ins&facet=aca_ins_lib&facet=reg_ins&facet=reg_ins_lib&refine.etablissement_type2=Universit%C3%A9&refine.sect_disciplinaire_lib=Math%C3%A9matiques+appliqu%C3%A9es+et+sciences+sociales&fields=etablissement,etablissement_lib");
-        $resultsEtablissements = json_decode($etablissementFormation, true);
-
-
-        foreach ($resultsEtablissements["records"] as $etablissement) {
-
-            // marquer les etablissments
-            $requestGeo = $etablissement["fields"]["etablissement"];
-
-            $etablissementGeolocalisation = file_get_contents("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-etablissements-enseignement-superieur&sort=uo_lib&rows=1&facet=uai&fields=uai,coordonnees&refine.uai=" . $requestGeo);
-
-
-            $resultsEtablissementsGeo = json_decode($etablissementGeolocalisation, true);
-
-            $coords = [0, 0];
-
-            foreach ($resultsEtablissementsGeo["records"] as $etab) {
-                $coords = $etab["fields"]["coordonnees"];
+            if($_POST['bac'] != "none"){
+                $refineBac = "&refine.niveau_lib=".$_POST['bac'];
             }
-            print(" <tr>
-            <td>
-                <div class=\"school-box\">
-                    <h3>" . $etablissement["fields"]["etablissement_lib"] . "</h3>
-                    <h5>adresse</h5>
+            if($_POST['formation']){
+                $refineForm = "&refine.libelle_intitule_1=".$_POST['formation'];
+            }
 
-                    <h4><label>Formations prodiguées</label></h4>
-                    <script>
-                   let x =" . $coords[0] . ";
-                   let y =" . $coords[1] . ";
-                   </script>
-                
-                    <button class=\"open-button\" onclick=\"openForm(x, y)\">Diplome et Formations</button>
+            if($_POST['acad']){
+                $refineAcad = "&refine.aca_etab_lib=".$_POST['acad'];
+            }
 
-                </div>
-            </td>
-        </tr>");
+            $request = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&q=diplome&rows=100&facet=rentree_lib&facet=etablissement&facet=etablissement_lib&refine.rentree_lib=2017-18".$refineBac.$refineForm.$refineAcad;
+            $etablissementFormation = file_get_contents($request);
+            $resultsEtablissements = json_decode($etablissementFormation, true);
+
+
+            foreach ($resultsEtablissements["facet_groups"][2]["facets"] as $etablissement) {
+
+                // marquer les etablissments
+                print(" 
+                <tr>
+                    <td>
+                        <div class=\"school-box\">
+                            <h3>" . $etablissement["name"] . "</h3>
+                            <h5>adresse</h5>
+        
+                            <h4><label>Formations prodiguées</label></h4>
+                       
+                            <button class=\"open-button\" onclick=\"openForm(0, 0)\">Diplome et Formations</button>
+        
+                        </div>
+                    </td>
+                </tr>
+                ");
+            }
         }
         ?>
         </tbody>
