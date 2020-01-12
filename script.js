@@ -13,25 +13,25 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
         'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
     id: 'mapbox/streets-v11'
 }).addTo(mymap);
-
-function setMarkerOnEtablissement(x, y) {
-    L.marker([x, y]).addTo(mymap);
+console.log(etablissement);
+for (var etab in etablissement) {
+    var coords = etablissement[etab];
+    L.marker([coords["x"], coords["y"]]).addTo(mymap);
 }
 
 function setViewOnEtablissement(x, y) {
     mymap.setView([x, y], 13.5);
 }
 
-function openForm(x, y) {
+function openForm(id) {
     let tab = document.getElementsByClassName("form-popup");
     for (let i = 0; i < tab.length; i++) {
         tab[i].style.display = "block";
 
     }
     document.getElementById("mapid").style.height = 400 + "px";
-    setViewOnEtablissement(x, y);
-
-    setMarkerOnEtablissement(x, y);
+    var coords = etablissement[id];
+    setViewOnEtablissement(coords["x"], coords["y"]);
 
 }
 

@@ -11,27 +11,62 @@
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
             integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
             crossorigin=""></script>
+
+    <script>
+        var etablissement = {};
+    </script>
 </head>
 <?php
+
+function getFacet(array $a, $facet)
+{
+    $i = 0;
+    foreach ($a as $fac) {
+        if (strcmp($fac["name"], $facet) == 0) {
+            return $i;
+        }
+        $i++;
+    }
+}
 
 function cmpDiplom(array $a, array $b)
 {
     return strcmp($a['name'], $b['name']);
 }
 
+if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad'])) {
+    $refineBac = "";
+    $refineForm = "";
+    $refineAcad = "";
+    $p = 0;
+
+    if (strcmp($_POST['bac'], "none") != 0) {
+        $refineBac = "&refine.niveau_lib=" . $_POST['bac'];
+    }
+    if (strcmp($_POST['formation'], "none") != 0) {
+        $refineForm = "&refine.libelle_intitule_1=" . $_POST['formation'];
+        $p++;
+    }
+
+    if (strcmp($_POST['acad'], "none") != 0) {
+        $refineAcad = "&refine.aca_etab_lib=" . $_POST['acad'];
+        $p++;
+    }
+
+    $request = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&q=diplome&rows=100&facet=rentree_lib&facet=etablissement&facet=etablissement_lib&refine.rentree_lib=2017-18" . $refineBac . $refineForm . $refineAcad;
+    $etablissementFormation = file_get_contents($request);
+    $resultsEtablissements = json_decode($etablissementFormation, true);
+}
+
 ?>
 <body>
 <div class="form-popup" id="myForm">
-    <div>
-        <form></form>
-
-    </div>
     <table class="fixed_headers" id="table_DF">
         <thead>
         <tr>
-            <th>Name</th>
-            <th>Color</th>
-            <th>Description</th>
+            <th>Diplome</th>
+            <th>Libelle Formation</th>
+            <th>Specialite</th>
         </tr>
         </thead>
         <tbody id="body_DF">
@@ -95,7 +130,9 @@ function cmpDiplom(array $a, array $b)
     </table>
 </div>
 
+
 <div class="form-popup" id="myForm2">
+    <!--
     <label>Diplômes</label>
     <select name="Diplômes">
         <option value="0"> BTS</option>
@@ -103,9 +140,10 @@ function cmpDiplom(array $a, array $b)
     </select>
 
     <br>
-
-    <button class="closeButton" onclick="closeForm()">On ferme ça</button>
+    -->
 </div>
+
+<button class="closeButton" onclick="closeForm()">On ferme ça</button>
 
 
 <div class="filtres" id="f1">
@@ -163,7 +201,6 @@ function cmpDiplom(array $a, array $b)
 
                 usort($jsonAcademie["facet_groups"][1]["facets"], 'cmpDiplom');
 
-
                 foreach ($jsonAcademie["facet_groups"][1]["facets"] as $formation) {
 
                     $value = $formation["name"];
@@ -185,49 +222,76 @@ function cmpDiplom(array $a, array $b)
         </tr>
         </thead>
         <tbody>
-        <?php
-        if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad'])) {
-            $refineBac = "";
-            $refineForm = "";
-            $refineAcad = "";
+        <form action="" method="post">
+            <?php
+            if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad'])) {
 
-            if($_POST['bac'] != "none"){
-                $refineBac = "&refine.niveau_lib=".$_POST['bac'];
-            }
-            if($_POST['formation']){
-                $refineForm = "&refine.libelle_intitule_1=".$_POST['formation'];
-            }
-
-            if($_POST['acad']){
-                $refineAcad = "&refine.aca_etab_lib=".$_POST['acad'];
-            }
-
-            $request = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&q=diplome&rows=100&facet=rentree_lib&facet=etablissement&facet=etablissement_lib&refine.rentree_lib=2017-18".$refineBac.$refineForm.$refineAcad;
-            $etablissementFormation = file_get_contents($request);
-            $resultsEtablissements = json_decode($etablissementFormation, true);
+                if ($resultsEtablissements["nhits"] > 0) {
+                    $uai = getFacet($resultsEtablissements["facet_groups"], "etablissement");
+                }
+                foreach ($resultsEtablissements["facet_groups"][$uai]["facets"] as $etablissement) {
 
 
-            foreach ($resultsEtablissements["facet_groups"][2]["facets"] as $etablissement) {
+                    $requestGeo = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-etablissements-enseignement-superieur&sort=uo_lib&facet=com_code&facet=uai&facet=type_d_etablissement&facet=com_nom&facet=dep_nom&facet=aca_nom&facet=reg_nom&facet=pays_etranger_acheminement&fields=uai,com_code,uo_lib,url,adresse_uai,coordonnees&refine.uai=" . $etablissement["name"];
+                    $etablissementGeo = file_get_contents($requestGeo);
 
-                // marquer les etablissments
-                print(" 
+                    $resultsGeo = json_decode($etablissementGeo, true);
+
+                    $x = 0;
+                    $y = 0;
+                    $name = "Pas de nom disponible";
+                    $addess = "Pas d'adresse disponible";
+                    $url = "Pas de site disponible";
+                    $uai = 0;
+
+                    if ($resultsGeo["nhits"] > 0) {
+                        $x = $resultsGeo["records"][0]["fields"]["coordonnees"][0];
+                        $y = $resultsGeo["records"][0]["fields"]["coordonnees"][1];
+                        if (isset($resultsGeo["records"][0]["fields"]["adresse_uai"])) {
+                            $address = $resultsGeo["records"][0]["fields"]["adresse_uai"];
+                        }
+                        $name = $resultsGeo["records"][0]["fields"]["uo_lib"];
+                        $url = $resultsGeo["records"][0]["fields"]["url"];
+                        $uai = $resultsGeo["records"][0]["fields"]["uai"];
+
+                        print ("
+                
+                        <script>
+                            var coord = {};
+                            coord[\"x\"]  =" . $x . ";
+                            coord[\"y\"]  =" . $y . ";
+                          
+                            
+                            
+                            etablissement[\"" . $uai . "\"] = coord;
+                        </script>
+                      
+                        
+                       ");
+
+                    }
+
+
+                    print(" 
                 <tr>
                     <td>
                         <div class=\"school-box\">
-                            <h3>" . $etablissement["name"] . "</h3>
-                            <h5>adresse</h5>
+                            <h3>" . $name . "</h3>
+                            <h5>" . $addess . "</h5>
+                            <a href=\"" . $url . "\">" . $url . "</a>
         
                             <h4><label>Formations prodiguées</label></h4>
-                       
-                            <button class=\"open-button\" onclick=\"openForm(0, 0)\">Diplome et Formations</button>
+                            
+                            <button id=\"" . $uai . "\" class=\"open-button\" onclick=\"openForm(this.id)\">Diplome et Formations</button>
         
                         </div>
                     </td>
                 </tr>
                 ");
+                }
             }
-        }
-        ?>
+            ?>
+        </form>
         </tbody>
     </table>
 </div>
