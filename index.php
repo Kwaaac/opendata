@@ -34,28 +34,40 @@ function cmpDiplom(array $a, array $b)
     return strcmp($a['name'], $b['name']);
 }
 
-if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad'])) {
-    $refineBac = "";
-    $refineForm = "";
-    $refineAcad = "";
-    $p = 0;
+if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']) || isset($_POST['etabs'])) {
 
-    if (strcmp($_POST['bac'], "none") != 0) {
-        $refineBac = "&refine.niveau_lib=" . $_POST['bac'];
-    }
-    if (strcmp($_POST['formation'], "none") != 0) {
-        $refineForm = "&refine.libelle_intitule_1=" . $_POST['formation'];
-        $p++;
+    if (isset($_POST['bac'])) {
+        $refineBac = "";
+        $refineForm = "";
+        $refineAcad = "";
+
+
+        if (strcmp($_POST['bac'], "none") != 0) {
+
+            $refineBac = "&refine.niveau_lib=" . $_POST['bac'];
+
+        }
+        if (strcmp($_POST['formation'], "none") != 0) {
+            $refineForm = "&refine.libelle_intitule_1=" . $_POST['formation'];
+
+        }
+
+        if (strcmp($_POST['acad'], "none") != 0) {
+            $refineAcad = "&refine.aca_etab_lib=" . $_POST['acad'];
+
+        }
     }
 
-    if (strcmp($_POST['acad'], "none") != 0) {
-        $refineAcad = "&refine.aca_etab_lib=" . $_POST['acad'];
-        $p++;
-    }
+    if (isset($_POST['etabs'])) {
+        $schoolUAI = $_POST['school'];
+        $request = $_POST['etabs'];
 
-    $request = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&q=diplome&rows=100&facet=rentree_lib&facet=etablissement&facet=etablissement_lib&refine.rentree_lib=2017-18" . $refineBac . $refineForm . $refineAcad;
+    } else {
+        $request = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&q=diplome&rows=100&facet=rentree_lib&facet=etablissement&facet=etablissement_lib&refine.rentree_lib=2017-18" . $refineBac . $refineForm . $refineAcad;
+    }
     $etablissementFormation = file_get_contents($request);
     $resultsEtablissements = json_decode($etablissementFormation, true);
+
 }
 
 ?>
@@ -70,61 +82,39 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']))
         </tr>
         </thead>
         <tbody id="body_DF">
-        <tr>
-            <td>Apple</td>
-            <td>Red</td>
-            <td>These are red.</td>
-        </tr>
-        <tr>
-            <td>Pear</td>
-            <td>Green</td>
-            <td>These are green.</td>
-        </tr>
-        <tr>
-            <td>Grape</td>
-            <td>Purple / Green</td>
-            <td>These are purple and green.</td>
-        </tr>
-        <tr>
-            <td>Orange</td>
-            <td>Orange</td>
-            <td>These are orange.</td>
-        </tr>
-        <tr>
-            <td>Banana</td>
-            <td>Yellow</td>
-            <td>These are yellow.</td>
-        </tr>
-        <tr>
-            <td>Kiwi</td>
-            <td>Green</td>
-            <td>These are green.</td>
-        </tr>
-        <tr>
-            <td>Plum</td>
-            <td>Purple</td>
-            <td>These are Purple</td>
-        </tr>
-        <tr>
-            <td>Watermelon</td>
-            <td>Red</td>
-            <td>These are red.</td>
-        </tr>
-        <tr>
-            <td>Tomato</td>
-            <td>Red</td>
-            <td>These are red.</td>
-        </tr>
-        <tr>
-            <td>Cherry</td>
-            <td>Red</td>
-            <td>These are red.</td>
-        </tr>
-        <tr>
-            <td>Cantelope</td>
-            <td>Orange</td>
-            <td>These are orange inside.</td>
-        </tr>
+        <?php
+        if (isset($_POST['school']) && isset($_POST['diplome_niveau'])) {
+
+            $requestFormBySchool = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&rows=50&sort=-rentree_lib&facet=rentree_lib&facet=diplome_rgp&refine.rentree_lib=2017-18&fields=diplome_rgp,libelle_intitule_1,libelle_intitule_2&refine.etablissement=" . $schoolUAI . $_POST['diplome_formation'] . $_POST['diplome_niveau'];
+            $fileRequestFormBySchool = file_get_contents($requestFormBySchool);
+            $jsonFormBySchool = json_decode($fileRequestFormBySchool, true);
+
+            foreach ($jsonFormBySchool["records"] as $diplomas) {
+                $specialite = "";
+
+                if (isset($diplomas["fields"]["libelle_intitule_2"])) {
+                    $specialite = $diplomas["fields"]["libelle_intitule_2"];
+                }
+
+                print ("
+                <tr>
+                    <td>
+                        " . $diplomas["fields"]["diplome_rgp"] . "
+                    </td>
+                    
+                    <td>
+                        " . $diplomas["fields"]["libelle_intitule_1"] . "
+                    </td>
+                    
+                    <td>
+                        " . $specialite . "
+                    </td>
+                    
+                </tr>
+                ");
+            }
+        }
+        ?>
 
         </tbody>
     </table>
@@ -143,8 +133,6 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']))
     -->
     <button class="closeButton" onclick="closeForm()">On ferme ça</button>
 </div>
-
-
 
 
 <div class="filtres" id="f1">
@@ -223,15 +211,19 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']))
         </tr>
         </thead>
         <tbody>
+        <form action="index.php" method="post">
+
+            <input type="hidden" name="etabs" value="<?php echo $request; ?>">
+            <input type="hidden" name="diplome_niveau" value="<?php echo $refineBac; ?>"
+            <input type="hidden" name="diplome_formation" value="<?php echo $refineForm; ?>"
 
             <?php
-            if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad'])) {
+            if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']) || isset($_POST['etabs'])) {
 
                 if ($resultsEtablissements["nhits"] > 0) {
                     $uai = getFacet($resultsEtablissements["facet_groups"], "etablissement");
                 }
                 foreach ($resultsEtablissements["facet_groups"][$uai]["facets"] as $etablissement) {
-
 
                     $requestGeo = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-etablissements-enseignement-superieur&sort=uo_lib&facet=com_code&facet=uai&facet=type_d_etablissement&facet=com_nom&facet=dep_nom&facet=aca_nom&facet=reg_nom&facet=pays_etranger_acheminement&fields=uai,com_code,uo_lib,url,adresse_uai,coordonnees&refine.uai=" . $etablissement["name"];
                     $etablissementGeo = file_get_contents($requestGeo);
@@ -283,7 +275,7 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']))
         
                             <h4><label>Formations prodiguées</label></h4>
                             
-                            <button id=\"" . $uai . "\" class=\"open-button\" onclick=\"openForm(this.id)\">Diplome et Formations</button>
+                            <button name=\"school\" type=\"submit\" id=\"" . $uai . "\" class=\"open-button\" value=\"" . $uai . "\" >Diplome et Formations</button>
         
                         </div>
                     </td>
@@ -292,13 +284,23 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']))
                 }
             }
             ?>
-     
+        </form>
         </tbody>
     </table>
 </div>
 
 <div id="mapid"></div>
 <script src="script.js"></script>
+<?php
+
+if (isset($schoolUAI)) {
+    print ("
+        <script> 
+           openForm(\"".$schoolUAI."\");
+        </script>");
+}
+
+?>
 
 </body>
 </html>
