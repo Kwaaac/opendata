@@ -141,9 +141,10 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']))
 
     <br>
     -->
+    <button class="closeButton" onclick="closeForm()">On ferme ça</button>
 </div>
 
-<button class="closeButton" onclick="closeForm()">On ferme ça</button>
+
 
 
 <div class="filtres" id="f1">
@@ -222,7 +223,7 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']))
         </tr>
         </thead>
         <tbody>
-        <form action="" method="post">
+
             <?php
             if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad'])) {
 
@@ -291,7 +292,7 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']))
                 }
             }
             ?>
-        </form>
+     
         </tbody>
     </table>
 </div>
