@@ -18,20 +18,12 @@
 </head>
 <?php
 require_once('Class/API.php');
+//openData/Class/
+require_once('Class/Schools/School.php');
+require_once('Class/Formations/Diploma.php');
 
 $api = new API();
 
-
-function getFacet(array $a, $facet)
-{
-    $i = 0;
-    foreach ($a as $fac) {
-        if (strcmp($fac["name"], $facet) == 0) {
-            return $i;
-        }
-        $i++;
-    }
-}
 
 function cmpDiplom(array $a, array $b)
 {
@@ -70,6 +62,7 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']) 
         $request = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&q=diplome&rows=100&facet=rentree_lib&facet=etablissement&facet=etablissement_lib&refine.rentree_lib=2017-18" . $refineBac . $refineForm . $refineAcad;
     }
     $api->setSchoolsJson($request);
+
 
 }
 
@@ -215,15 +208,15 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']) 
                 $resultsEtablissements = $api->getSchoolJson();
                 if (isset($resultsEtablissements)) {
                     if ($resultsEtablissements["nhits"] > 0) {
-                        $uai = getFacet($resultsEtablissements["facet_groups"], "etablissement");
+                        $uai = API::getFacet($resultsEtablissements["facet_groups"], "etablissement");
 
                         $etabs = $resultsEtablissements["facet_groups"][$uai]["facets"];
                         print("Nombres d'écoles trouvées: " . count($etabs));
                     }
 
-
                 }
-                ?></th>
+                ?>
+            </th>
         </tr>
         </thead>
         <tbody>
@@ -236,14 +229,26 @@ if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']) 
 
             <?php
             if (isset($_POST['bac']) && isset($_POST['formation']) && isset($_POST['acad']) || isset($_POST['etabs'])) {
-                foreach ($etabs as $etablissement) {
 
+                foreach ($etabs as $etablissement) {
                     $requestSchool = "https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-etablissements-enseignement-superieur&sort=uo_lib&facet=com_code&facet=uai&facet=type_d_etablissement&facet=com_nom&facet=dep_nom&facet=aca_nom&facet=reg_nom&facet=pays_etranger_acheminement&fields=uai,com_code,uo_lib,url,adresse_uai,coordonnees&refine.uai=" . $etablissement["name"];
-                    $school = new School($requestSchool);
+                    $school = new School($requestSchool, $_POST['bac'], $_POST['formation']);
+
+                    var_dump($school);
+//                    if ($school->getUai() != 0) {
+//                        $requestFormBySchool = API::getJsonFromRequest("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&rows=50&sort=-rentree_lib&facet=rentree_lib&facet=diplome_rgp&refine.rentree_lib=2017-18&fields=niveau,niveau_lib,diplome_rgp,libelle_intitule_1,libelle_intitule_2&refine.etablissement=" . $school->getUai() . "&refine.libelle_intitule_1=" . $_POST['formation'] . "&refine.niveau_lib=" . $_POST['bac']);
+//
+//                        $truc = 0;
+//                        foreach ($requestFormBySchool["records"] as $formationff) {
+//                            $temp = new Diploma($formationff["fields"]);
+//                            var_dump($formationff["fields"]);
+//                            $truc++;
+//                        }
+//                    }
+
 
                     /*
                         print ("
-
 
                         <script>
                             var coord = {};

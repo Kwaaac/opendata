@@ -1,15 +1,15 @@
 <?php
 
 
-class Diplome
+class Diploma
 {
-    private int $cycle;
+    private $niveau;
 
-    private string $diplome_rgp;
+    private $diplome_rgp;
 
-    private string $libIntitule_A;
+    private $libIntitule_A;
 
-    private string $libIntitule_B;
+    private $libIntitule_B;
 
     /**
      * Diplome constructor.
@@ -18,15 +18,20 @@ class Diplome
      * @param string $libIntitule_A
      * @param string $libIntitule_B
      */
-    public function __construct($request)
+    public function __construct($formation)
     {
-        $jsonForm = API::getJsonFromRequest($request);
+        $this->niveau = [$formation["niveau_lib"] => $formation["niveau"]];
+        $this->diplome_rgp = $formation["diplome_rgp"];
+        $this->libIntitule_A = $formation["libelle_intitule_1"];
+        if (isset($formation["libelle_intitule_2"])) {
+            $this->libIntitule_B = $formation["libelle_intitule_2"];
+        }
 
-//        diplom = $jsonForm["records"][0]["fields"];
-//        $this->cycle = ;
-//        $this->diplome_rgp = $diplome_rgp;
-//        $this->libIntitule_A = $libIntitule_A;
-//        $this->libIntitule_B = $libIntitule_B;
+    }
+
+    public static function getClass()
+    {
+        return "Diploma";
     }
 
     /**
@@ -60,7 +65,6 @@ class Diplome
     {
         return $this->libIntitule_B;
     }
-
 
 
 }

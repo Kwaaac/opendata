@@ -1,10 +1,10 @@
 <?php
 
-
+require_once ('Class/Schools/School.php');
 class SchoolCollection extends ArrayObject
 {
 
-    private array $schools = [];
+    private $schools = [];
 
     /**
      * SchoolCollection constructor.
@@ -15,7 +15,7 @@ class SchoolCollection extends ArrayObject
         parent::__construct($schools);
     }
 
-    public function addSchool (School $val, $key = null): void
+    public function addSchool (School $val, $key = null)
     {
         if ($key === null) {
             $this->schools[] = $val;
@@ -24,7 +24,7 @@ class SchoolCollection extends ArrayObject
         }
     }
 
-    public function deleteSchool($key): void
+    public function deleteSchool($key)
     {
         unset($this->schools[$key]);
     }
@@ -37,7 +37,7 @@ class SchoolCollection extends ArrayObject
     public function offsetSet($index, $newval)
     {
         if (!(strcmp($newval.get_class(), School::getClass()) == 0)) {
-            throw new \InvalidArgumentException("Must be int");
+            throw new \InvalidArgumentException("Must be School");
         }
 
         parent::offsetSet($index, $newval);
