@@ -52,7 +52,6 @@ class School
         $this->y = $y;
     }
 
-
     /**
      * @return int|mixed
      */
