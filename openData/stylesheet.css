@@ -2,6 +2,7 @@ body {
     padding: 0;
     margin: 0;
     background-color: gray;
+    font-family: Arial, serif;
 }
 
 .filtres {
@@ -54,17 +55,30 @@ input {
 }
 
 .fixed_headers {
-    width: 300px;
+    width: 98%;
     table-layout: fixed;
     border-collapse: collapse;
     margin-left: 5px;
+    height: 70%;
 }
+
+#myForm_DF{
+    visibility: hidden;
+    margin-right: 15%;
+}
+
+#myForm2{
+    margin-top: 1%;
+}
+
 
 /* tableau des diplomes et formations */
 #table_DF{
-    width: 750px;
+    width: 850px;
     table-layout: fixed;
     border-collapse: collapse;
+    margin: 0;
+    background-color: snow;
 }
 
 .fixed_headers th {
@@ -89,7 +103,12 @@ input {
 
 .fixed_headers td:nth-child(3),
 .fixed_headers th:nth-child(3) {
-    width: 350px;
+    min-width: 200px;
+}
+
+.fixed_headers td:nth-child(4),
+.fixed_headers th:nth-child(4) {
+    min-width: 200px;
 }
 
 .fixed_headers thead {
@@ -106,7 +125,7 @@ input {
     display: block;
     overflow: auto;
     width: 100%;
-    height: 475px;
+    height: 100%;
 }
 
 /* Tableau diplome et formations */
@@ -131,6 +150,23 @@ input {
 
 .old_ie_wrapper tbody {
     height: auto;
+}
+
+#footer{
+    background-color: #333333;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#footer a{
+    color: #ffffff;
+}
+
+#research {
+    text-align: right;
+    margin-right: 5%;
 }
 
 

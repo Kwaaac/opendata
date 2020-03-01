@@ -17,6 +17,7 @@ class DiplomaCollection extends ArrayObject
 
     public function addDiploma (Diploma $val, $key = null)
     {
+
         if ($key === null) {
             $this->diplomas[] = $val;
         } else {
@@ -29,9 +30,23 @@ class DiplomaCollection extends ArrayObject
         unset($this->diplomas[$key]);
     }
 
-    public function get($key): Diploma
+    public function count()
+    {
+        $res = 0;
+        foreach ($this->diplomas as $diploma){
+            $res++;
+        }
+
+        return $res;
+    }
+
+    public function get($key)
     {
         return $this->diplomas[$key];
+    }
+
+    public function getArray(){
+        return $this->diplomas;
     }
 
     public function offsetSet($index, $newval)

@@ -16,6 +16,7 @@ class SchoolCollection extends ArrayObject
     }
 
     public function addSchool (School $val, $key = null)
+
     {
         if ($key === null) {
             $this->schools[] = $val;
@@ -24,14 +25,29 @@ class SchoolCollection extends ArrayObject
         }
     }
 
+
+    public function count()
+    {
+        $res = 0;
+        foreach ($this->schools as $school){
+            $res++;
+        }
+
+        return $res;
+    }
+
     public function deleteSchool($key)
     {
         unset($this->schools[$key]);
     }
 
-    public function get($key): School
+    public function get($key)
     {
         return $this->schools[$key];
+    }
+
+    public function getArray(){
+        return $this->schools;
     }
 
     public function offsetSet($index, $newval)

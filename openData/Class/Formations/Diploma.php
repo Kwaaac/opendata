@@ -20,13 +20,27 @@ class Diploma
      */
     public function __construct($formation)
     {
-        $this->niveau = [$formation["niveau_lib"] => $formation["niveau"]];
+        $libB = "Pas de Discipline";
+        $this->niveau = $formation["niveau_lib"];
         $this->diplome_rgp = $formation["diplome_rgp"];
         $this->libIntitule_A = $formation["libelle_intitule_1"];
-        if (isset($formation["libelle_intitule_2"])) {
-            $this->libIntitule_B = $formation["libelle_intitule_2"];
+        if (isset($formation["discipline_lib"])) {
+            $libB = $formation["discipline_lib"];
         }
 
+        $this->libIntitule_B = $libB;
+
+    }
+
+    public function toString()
+    {
+
+        return $array = [
+            "diplome_rgp" => $this->diplome_rgp,
+            "niveau" => $this->niveau,
+            "lib1"=>$this->libIntitule_A,
+            "lib2"=>$this->libIntitule_B,
+        ];
     }
 
     public static function getClass()
@@ -37,7 +51,7 @@ class Diploma
     /**
      * @return int
      */
-    public function getCycle(): int
+    public function getCycle()
     {
         return $this->cycle;
     }
@@ -45,7 +59,7 @@ class Diploma
     /**
      * @return string
      */
-    public function getDiplomeRgp(): string
+    public function getDiplomeRgp()
     {
         return $this->diplome_rgp;
     }
@@ -53,7 +67,7 @@ class Diploma
     /**
      * @return string
      */
-    public function getLibIntituleA(): string
+    public function getLibIntituleA()
     {
         return $this->libIntitule_A;
     }
@@ -61,7 +75,7 @@ class Diploma
     /**
      * @return string
      */
-    public function getLibIntituleB(): string
+    public function getLibIntituleB()
     {
         return $this->libIntitule_B;
     }

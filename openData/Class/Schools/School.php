@@ -18,12 +18,15 @@ class School
 
     private $formations;
 
+    private $found;
+
 
     /**
      * Schools constructor.
      * @param string $request
+     *
      */
-    public function __construct(string $request, string $niveau, string $formation)
+    public function __construct($request, $niveau, $formation)
     {
 
         $jsonSchool = API::getJsonFromRequest($request);
@@ -33,8 +36,9 @@ class School
         $name = "Pas de nom disponible";
         $address = "Pas d'adresse disponible";
         $url = "Pas de site disponible";
-        $uai = 0;
+        $uai = -1;
         $formations = new DiplomaCollection();
+        $found = false;
 
 
         if ($jsonSchool["nhits"] > 0) {
@@ -46,10 +50,11 @@ class School
             $name = $jsonSchool["records"][0]["fields"]["uo_lib"];
             $url = $jsonSchool["records"][0]["fields"]["url"];
             $uai = $jsonSchool["records"][0]["fields"]["uai"];
+            $found = true;
         }
 
         if ($uai != 0) {
-            $requestFormBySchool = API::getJsonFromRequest("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&rows=50&sort=-rentree_lib&facet=rentree_lib&facet=diplome_rgp&refine.rentree_lib=2017-18&fields=niveau,niveau_lib,diplome_rgp,libelle_intitule_1,libelle_intitule_2&refine.etablissement=" . $uai . "&refine.libelle_intitule_1=" . $formation . "&refine.niveau_lib=" . $niveau);
+            $requestFormBySchool = API::getJsonFromRequest("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-principaux-diplomes-et-formations-prepares-etablissements-publics&rows=50&sort=-rentree_lib&facet=rentree_lib&facet=diplome_rgp&refine.rentree_lib=2017-18&fields=niveau,discipline_lib,niveau_lib,diplome_rgp,libelle_intitule_1,libelle_intitule_2&refine.etablissement=" . $uai . $formation . $niveau);
 
             foreach ($requestFormBySchool["records"] as $formation) {
                 $formations->addDiploma(new Diploma($formation["fields"]));
@@ -63,6 +68,7 @@ class School
         $this->x = $x;
         $this->y = $y;
         $this->formations = $formations;
+        $this->found = $found;
     }
 
     /**
@@ -125,6 +131,11 @@ class School
     public function getFormations()
     {
         return $this->formations;
+    }
+
+    public function isValid()
+    {
+        return $this->found;
     }
 
     public static function getClass()
